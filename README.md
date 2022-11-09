@@ -1,1 +1,3 @@
-# SDS3386Final
+# SDS3386 Final- Team Light
+
+## Created by Noura, Lendl, and Mershab
