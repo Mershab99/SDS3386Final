@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+    mongodb:
+        image: mongo
+        container_name: mongodb
+        ports:
+          - 27017:27017
+        environment:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: testing123
+        volumes:
+          - ./data/pit-0:/data/db
+          - ./data/logs/mongodb:/logs
+        #restart: on-failure
+        networks:
+          - traffic_net
+
+    sds-tweet:
+        build:
+          context: ./
+        image: sds-tweet:latest
+        container_name: sds-tweet
+        environment:
+          - MONGO_HOST=mongodb
+          - MONGO_PORT=27017
+          - MONGO_USERNAME=admin
+          - MONGO_PASSWORD=testing123
+          - MONGO_DB=tweetbot
+          - TWITTER_CONSUMER_KEY=XuH5iLYYwH0sDiiuRbhO6n9k8
+          - TWITTER_CONSUMER_SECRET=ehcWmBXcXLqa3HIgv3JFJbPzms94e1oVbniBoRru05OPgHt42f
+          - TWITTER_ACCESS_TOKEN=1581324017486774278-CjC1welDM1UQpYk9C60VYmVll6MdNH
+          - TWITTER_ACCESS_TOKEN_SECRET=XbBudoHF8L1SBKrVy8fMBBOKgi93t03F8165sRZUwQpHe
+        depends_on:
+            - mongodb
+        #ports:
+        #  - 8000:8000
+        networks:
+        - traffic_net
+
+networks:
+  traffic_net:
+    driver: bridge

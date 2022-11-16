@@ -1,6 +1,6 @@
 FROM python:3.10
 
-RUN pip3 install pymongo python-dotenv
+RUN pip3 install pymongo python-dotenv tweepy
 #RUN pip3 install -r requirements.txt
 
 

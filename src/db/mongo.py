@@ -12,11 +12,6 @@ class Datastore:
         ).get_database(os.environ['MONGO_DB'])
         self.collection = self.db.get_collection(collection)
 
-
-class DataLake(Datastore):
-    def __init__(self):
-        super().__init__('data_lake')
-
     def flow_in(self, key, data):
         flow = {
             'key': key,
@@ -38,6 +33,3 @@ class DataLake(Datastore):
             raise KeyError("No object found for key:{}".format(key))
         obj.pop('_id')
         return obj
-
-
-LAKE_INSTANCE = DataLake()
