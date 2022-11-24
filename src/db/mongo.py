@@ -33,3 +33,30 @@ class Datastore:
             raise KeyError("No object found for key:{}".format(key))
         obj.pop('_id')
         return obj
+
+    def find_by_field(self, field_name, field_value):
+        obj = self.collection.find_one({
+            f'data.{field_name}': field_value
+        })
+        if obj is None:
+            raise KeyError("No object found for value: {} in field :{}".format(field_value, field_name))
+        obj.pop('_id')
+        return obj
+
+    def find_many_by_key(self, key):
+        obj = self.collection.find({
+            'key': key
+        })
+        if obj is None:
+            raise KeyError("No object found for key:{}".format(key))
+        obj.pop('_id')
+        return obj
+
+    def find__many_by_field(self, field_name, field_value):
+        obj = self.collection.find({
+            f'data.{field_name}': field_value
+        })
+        if obj is None:
+            raise KeyError("No object found for value: {} in field :{}".format(field_value, field_name))
+        obj.pop('_id')
+        return obj

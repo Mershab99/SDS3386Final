@@ -1,7 +1,7 @@
 import tweepy
 import os
 
-max_tweets = 10000
+max_tweets = 1000
 
 
 def search_tweets(api: tweepy.API):

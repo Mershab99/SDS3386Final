@@ -1,10 +1,10 @@
+import os
+
+import tweepy
 from db.mongo import Datastore
+from tweepy.parsers import JSONParser
 from twitter.geo import reverse_geocode_ottawa
 from twitter.tweet import search_tweets
-import tweepy
-import os
-import json
-from tweepy.parsers import JSONParser
 
 os.environ['LAT'], os.environ['LNG'] = "45.425187", "-75.699813"
 os.environ['REVERSE_GEOCODE_DISTANCE_M'] = "15000"
@@ -33,7 +33,7 @@ def main():
         for tweet in tweets:
             tweet_collection.flow_in(key=tweet['id'], data=tweet)
             print(f"Tweet {counter} Stored")
-
+            counter += 1
 
     except Exception as e:
         print(e)
