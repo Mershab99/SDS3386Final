@@ -1,8 +1,9 @@
 import os
 
 import tweepy
-from db.mongo import Datastore
 from tweepy.parsers import JSONParser
+
+from db.mongo import Datastore, store_geocodes, store_tweets
 from twitter.geo import reverse_geocode_ottawa
 from twitter.tweet import search_tweets
 
@@ -18,22 +19,17 @@ def main():
 
         api = tweepy.API(auth, parser=JSONParser())
 
-        geo_codes = Datastore('geo_codes')
+        geocode_collection = Datastore('geo_codes')
         tweet_collection = Datastore('tweets')
 
         print("OTTAWA COVID TWEET ANALYZER")
 
         places = reverse_geocode_ottawa(api)
-        for place in places['places']:
-            geo_codes.flow_in(key=place['id'], data=place)
-            print("Place Stored")
+
+        store_geocodes(places, geocode_collection)
+
         tweets = search_tweets(api)
-        counter = 0
-        # TODO: test counter impl
-        for tweet in tweets:
-            tweet_collection.flow_in(key=tweet['id'], data=tweet)
-            print(f"Tweet {counter} Stored")
-            counter += 1
+        store_tweets(tweets, tweet_collection)
 
     except Exception as e:
         print(e)

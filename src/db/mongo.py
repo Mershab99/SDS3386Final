@@ -52,7 +52,7 @@ class Datastore:
         obj.pop('_id')
         return obj
 
-    def find__many_by_field(self, field_name, field_value):
+    def find_many_by_field(self, field_name, field_value):
         obj = self.collection.find({
             f'data.{field_name}': field_value
         })
@@ -60,3 +60,17 @@ class Datastore:
             raise KeyError("No object found for value: {} in field :{}".format(field_value, field_name))
         obj.pop('_id')
         return obj
+
+
+def store_tweets(tweets: list, tweet_collection: Datastore):
+    counter = 0
+    for tweet in tweets:
+        tweet_collection.flow_in(key=tweet['id'], data=tweet)
+        print(f"Tweet {counter} Stored")
+        counter = counter + 1
+
+
+def store_geocodes(places, geocode_store):
+    for place in places['places']:
+        geocode_store.flow_in(key=place['id'], data=place)
+        print("Place Stored")
