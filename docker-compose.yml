@@ -9,9 +9,13 @@ services:
         environment:
           MONGO_INITDB_ROOT_USERNAME: admin
           MONGO_INITDB_ROOT_PASSWORD: testing123
+        # TODO: UNCOMMENT ME
         #volumes:
         #  - ./data/pit-0:/data/db
         #  - ./data/logs/mongodb:/logs
+
+
+
         #restart: on-failure
         networks:
           - traffic_net
