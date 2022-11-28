@@ -4,10 +4,8 @@ RUN pip3 install pymongo~=4.3.3 python-dotenv tweepy~=4.12.1 transformers~=4.24.
 
 RUN mkdir /app
 WORKDIR /app
-COPY ./src .
+COPY . .
 #RUN pip3 install -r requirements.txt
 
-
-
 ENTRYPOINT ["python"]
-CMD ["./main.py"]
+CMD ["./src/main.py"]

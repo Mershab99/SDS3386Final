@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 
 from pymongo import MongoClient
@@ -68,6 +69,7 @@ def store_tweets(tweets: list, tweet_collection: Datastore):
         tweet_collection.flow_in(key=tweet['id'], data=tweet)
         print(f"Tweet {counter} Stored")
         counter = counter + 1
+        time.sleep(0.01)
 
 
 def store_geocodes(places, geocode_store):

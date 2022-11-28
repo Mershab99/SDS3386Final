@@ -25,6 +25,7 @@ services:
           context: ./
         image: sds-tweet:latest
         container_name: sds-tweet
+        env_file: .env
         depends_on:
           - mongodb
         #ports:
