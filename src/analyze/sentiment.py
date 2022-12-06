@@ -15,3 +15,4 @@ def classify_bert(text):
     output = bert_classifier(text)
     output[0]['model'] = 'nlptown/bert-base-multilingual-uncased-sentiment'
     return output[0]
+
