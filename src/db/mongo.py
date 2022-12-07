@@ -62,6 +62,17 @@ class Datastore:
         obj.pop('_id')
         return obj
 
+    def flow_out(self):
+        obj_list = self.collection.find({})
+        if obj_list is None:
+            raise KeyError("No objects found")
+
+        return obj_list
+
+
+def retrieve_tweets(tweet_collection: Datastore):
+    return tweet_collection.flow_out()
+
 
 def store_tweets(tweets: list, tweet_collection: Datastore):
     counter = 0
