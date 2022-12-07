@@ -68,9 +68,17 @@ class Datastore:
 
         return obj_list
 
+    def retrieve_tweets(self):
+        collection = self.flow_out()
+        unpacked_tweets = [unpack_data(document) for document in list(collection)]
+        return unpacked_tweets
 
-def retrieve_tweets(tweet_collection: Datastore):
-    return tweet_collection.flow_out()
+
+def unpack_data(input_dict: dict):
+    if 'data' in input_dict.keys():
+        return unpack_data(input_dict.pop('data'))
+    else:
+        return input_dict
 
 
 def store_tweets(tweets: list, tweet_collection: Datastore):

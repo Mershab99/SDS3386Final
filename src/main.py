@@ -38,40 +38,42 @@ def retrieve_data():
 
 def sentiment_analysis(tweet_store: Datastore):
     try:
-        retrieve_tweets = tweet_store.flow_out()
+        retrieve_tweets = tweet_store.retrieve_tweets()
         counter = 1
         for tweet in retrieve_tweets:
-            tweet = unpack_data(tweet)
-            sentiment = extract_value_if_key_exists('sentiment', tweet)
-            # OPTIONALLY CHANGE TO SENTIMENT SIZE FOR MORE CLASSIFIERS
-            if sentiment is None:
-                text = extract_value_if_key_exists('text', tweet)
-                tweet['sentiment'] = [sentiment_classifier(text), bert_classifier(text)]
+            tweet = remove_data_tag(tweet)
+            if 'sentiment' in tweet.keys():
+                tweet.pop('sentiment')
 
-                _id = extract_value_if_key_exists('id', tweet)
-                tweet_collection.flow_in(key=_id, data=tweet)
+            text = extract_value_if_key_exists('text', tweet)
+            tweet['classifier_dilbert'] = sentiment_classifier(text)[0]
+            tweet['classifier_bert'] = bert_classifier(text)[0]
 
-                print(f"tweet {counter}: annotated with sentiment")
-            else:
-                print(f"SKIP: Tweet {counter}: already annotated with sentiment")
+            _id = int(extract_value_if_key_exists('id', tweet))
+            tweet_collection.flow_in(key=_id, data=tweet)
+
+            print(f"tweet {counter}: annotated with sentiment")
             counter = counter + 1
     except Exception as e:
         print(e)
 
-
-def unpack_data(input_dict: dict):
-    if 'data' in input_dict.keys():
-        return unpack_data(input_dict.pop('data'))
-    else:
-        return input_dict
 
 
 def read_from_csv(csv_filename: str):
     df = pd.read_csv(csv_filename)
     print(df)
     list_of_jsons = df.to_json(orient='records', lines=True).splitlines()
-    return [json.loads(tweet) for tweet in list_of_jsons]
-
+    jsonified_tweets = [remove_data_tag(json.loads(tweet)) for tweet in list_of_jsons]
+    return jsonified_tweets
+def remove_data_tag(input_dict: dict):
+    new_dict = {}
+    for key, value in input_dict.items():
+        if key.startswith('data.'):
+            new_key = key.replace('data.', '')
+            new_dict[new_key] = input_dict[key]
+        else:
+            new_dict[key] = input_dict[key]
+    return new_dict
 
 def extract_value_if_key_exists(key: str, input_dict: dict):
     if input_dict is None:
@@ -82,51 +84,85 @@ def extract_value_if_key_exists(key: str, input_dict: dict):
     elif f'data.{key}' in input_dict.keys():
         val = input_dict[f'data.{key}']
     else:
-        val = input_dict
+        val = None
     return val
 
 
 def create_heatmap():
-    pass
-
+    curated_tweets = curate_tweets()
+    curated_ds = Datastore('curated')
+    curated_ds.flow_in()
+    x = 1
 
 def curate_tweets():
     curated_tweet_list = []
-    for tweet in tweet_collection.flow_out():
-        data = unpack_data(tweet)
-        sentiment = extract_value_if_key_exists('sentiment', data)
-        user = extract_value_if_key_exists('user', data)
-        user_loc = extract_value_if_key_exists('location', user)
+    for tweet in tweet_collection.retrieve_tweets():
+        tweet = remove_data_tag(tweet)
+        sentiment_bert = extract_value_if_key_exists('classifier_dilbert', tweet)
+        sentiment_dilbert = extract_value_if_key_exists('classifier_bert', tweet)
 
-        geo = extract_value_if_key_exists('geo', data)
-        coordinates = extract_value_if_key_exists('coordinates', data)
+        user = extract_value_if_key_exists('user', tweet)
+        user_loc = extract_value_if_key_exists('location', user)
+        user_id = extract_value_if_key_exists('location', user)
+        user_name = extract_value_if_key_exists('name', user)
+        user_screen_name = extract_value_if_key_exists('screen_name', user)
+
+        geo = extract_value_if_key_exists('geo', tweet)
+        coordinates = extract_value_if_key_exists('coordinates', tweet)
+
+        text = extract_value_if_key_exists('text', tweet)
 
         output = {
-            'sentiment': sentiment,
+            'sentiment_bert': sentiment_bert[0] if type(sentiment_bert) is list else sentiment_bert,
+            'sentiment_dilbert': sentiment_dilbert[0]if type(sentiment_dilbert) is list else sentiment_dilbert,
             'location': user_loc,
             'geo': geo,
-            'coordinates': coordinates
+            'coordinates': coordinates,
+            'retweet_count': extract_value_if_key_exists('retweet_count', tweet),
+            'user.location': user_loc,
+            'user.screen_name': user_screen_name,
+            'user.name': user_name,
+            'user.id': user_id
             # add fields here
         }
         curated_tweet_list.append(output)
+    return curated_tweet_list
 
+def cp(ds1: Datastore, ds2: Datastore):
+    ds1_tweets = ds1.retrieve_tweets()
+    tweets_for_ds2 = []
+    for tweet in ds1_tweets:
+        tweet = remove_data_tag(tweet)
+        if 'user' in tweet.keys():
+            user = extract_value_if_key_exists('user', tweet)
+            tweet['user.location'] = extract_value_if_key_exists('location', user)
+            tweet['user.screen_name'] = extract_value_if_key_exists('screen_name', user)
+            tweet['user.name'] = extract_value_if_key_exists('name', user)
+            tweet['user.id'] = extract_value_if_key_exists('id', user)
 
+        tweets_for_ds2.append(tweet)
+    for tweet in tweets_for_ds2:
+        ds2.flow_in(tweet['id'], tweet)
+        print('copied tweet')
+    x = 1
 def main():
     print("OTTAWA COVID TWEET ANALYZER")
     print("Sourcing and Loading Tweets into DB")
     # retrieve_data()
     # READ TWEETS FROM CSV
-    # tweets = read_from_csv("all_tweets.csv")
-    # store_tweets(tweets, tweet_collection)
+    #tweets = read_from_csv("tweets.csv")
+    #tweets1 = read_from_csv("tweets1.csv")
+    #store_tweets(tweets, tweet_collection)
+    #store_tweets(tweets1, tweet_collection)
 
     # Run sentiment pipeline
-    sentiment_analysis(tweet_collection)
+    #sentiment_analysis(tweet_collection)
 
     # Visualize Data
-    # create_heatmap()
+    #create_heatmap()
     # Heatmap
-    curate_tweets()
-
+    #curate_tweets()
+    cp(tweet_collection, Datastore('output_tweets'))
 
 if __name__ == "__main__":
     main()
