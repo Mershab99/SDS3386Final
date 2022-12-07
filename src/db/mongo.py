@@ -1,5 +1,4 @@
 import os
-import time
 from datetime import datetime
 
 from pymongo import MongoClient
@@ -51,7 +50,7 @@ class Datastore:
         if obj is None:
             raise KeyError("No object found for key:{}".format(key))
         obj.pop('_id')
-        return obj
+        return obj.pop('data')
 
     def find_many_by_field(self, field_name, field_value):
         obj = self.collection.find({
@@ -77,10 +76,13 @@ def retrieve_tweets(tweet_collection: Datastore):
 def store_tweets(tweets: list, tweet_collection: Datastore):
     counter = 0
     for tweet in tweets:
-        tweet_collection.flow_in(key=tweet['id'], data=tweet)
+        if 'id' in tweet.keys():
+            _id = tweet['id']
+        elif 'data.id' in tweet.keys():
+            _id = tweet['data.id']
+        tweet_collection.flow_in(key=_id, data=tweet)
         print(f"Tweet {counter} Stored")
         counter = counter + 1
-        time.sleep(0.01)
 
 
 def store_geocodes(places, geocode_store):
