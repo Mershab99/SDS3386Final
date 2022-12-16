@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 
+from random import seed
+from random import random
 from pymongo import MongoClient
 
 
@@ -69,16 +71,33 @@ class Datastore:
         return obj_list
 
     def retrieve_tweets(self):
+        unpacked_tweets = []
         collection = self.flow_out()
-        unpacked_tweets = [unpack_data(document) for document in list(collection)]
+        if collection is not None:
+            for document in collection:
+                data = unpack_data(document)
+                if data is not None:
+                    unpacked_tweets.append(data)
+
         return unpacked_tweets
+
+
+seed(1)
+
+
+def create_random_id():
+    value = 1 + (random() * (100000000 - 1))
+    return int(value)
 
 
 def unpack_data(input_dict: dict):
     if 'data' in input_dict.keys():
         return unpack_data(input_dict.pop('data'))
+    elif 'id' not in input_dict.keys():
+        return None
     else:
         return input_dict
+
 
 
 def store_tweets(tweets: list, tweet_collection: Datastore):
@@ -88,6 +107,10 @@ def store_tweets(tweets: list, tweet_collection: Datastore):
             _id = tweet['id']
         elif 'data.id' in tweet.keys():
             _id = tweet['data.id']
+
+        if _id == 1.6e+18:
+            _id = create_random_id()
+
         tweet_collection.flow_in(key=_id, data=tweet)
         print(f"Tweet {counter} Stored")
         counter = counter + 1
