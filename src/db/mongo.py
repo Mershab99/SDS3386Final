@@ -85,9 +85,12 @@ class Datastore:
 seed(1)
 
 
-def create_random_id():
-    value = 1 + (random() * (100000000 - 1))
-    return int(value)
+def create_random_id(ds: Datastore):
+    value = int(1 + (random() * (100000000 - 1)))
+    if ds.collection.count_documents({'id': value}) > 0:
+        return create_random_id(ds)
+    else:
+        return value
 
 
 def unpack_data(input_dict: dict):
@@ -99,7 +102,6 @@ def unpack_data(input_dict: dict):
         return input_dict
 
 
-
 def store_tweets(tweets: list, tweet_collection: Datastore):
     counter = 0
     for tweet in tweets:
@@ -109,7 +111,7 @@ def store_tweets(tweets: list, tweet_collection: Datastore):
             _id = tweet['data.id']
 
         if _id == 1.6e+18:
-            _id = create_random_id()
+            _id = create_random_id(tweet_collection)
 
         tweet_collection.flow_in(key=_id, data=tweet)
         print(f"Tweet {counter} Stored")
