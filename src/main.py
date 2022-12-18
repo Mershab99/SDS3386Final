@@ -1,35 +1,31 @@
 import json
 import os
+import time
 
-import pandas
 import tweepy
 from tweepy.parsers import JSONParser
 
 from db.mongo import Datastore, store_geocodes, store_tweets
-from twitter.geo import reverse_geocode_ottawa
+from twitter.geo import retrieve_places, pull_places
 from twitter.tweet import search_tweets
 from analyze.sentiment import sentiment_classifier, bert_classifier
 import pandas as pd
 
 os.environ['LAT'], os.environ['LNG'] = "45.425187", "-75.699813"
-os.environ['REVERSE_GEOCODE_DISTANCE_M'] = "15000"
+os.environ['REVERSE_GEOCODE_DISTANCE_M'] = "150000"
 
 geocode_collection = Datastore('geo_codes')
 tweet_collection = Datastore('tweets')
 
+auth = tweepy.OAuth1UserHandler(
+    os.environ.get('TWITTER_CONSUMER_KEY'), os.environ.get('TWITTER_CONSUMER_SECRET'),
+    os.environ.get('TWITTER_ACCESS_TOKEN'), os.environ.get('TWITTER_ACCESS_TOKEN_SECRET'))
+
+api = tweepy.API(auth, parser=JSONParser())
+
 
 def retrieve_data():
     try:
-        auth = tweepy.OAuth1UserHandler(
-            os.environ.get('TWITTER_CONSUMER_KEY'), os.environ.get('TWITTER_CONSUMER_SECRET'),
-            os.environ.get('TWITTER_ACCESS_TOKEN'), os.environ.get('TWITTER_ACCESS_TOKEN_SECRET'))
-
-        api = tweepy.API(auth, parser=JSONParser())
-
-        places = reverse_geocode_ottawa(api)
-
-        store_geocodes(places, geocode_collection)
-
         output_tweets = []
         tweets = search_tweets(api)
         for tweet in tweets:
@@ -53,18 +49,12 @@ def retrieve_data():
         print(e)
 
 
-def cleanup_tweets(tweets: list):
-    for tweet in tweets:
-        # tweet['id']
-        pass
-
-
 def sentiment_analysis(tweets: list):
     try:
         counter = 1
         output_tweets = []
         for tweet in tweets:
-            tweet = remove_data_tag(tweet)
+            # tweet = remove_data_tag(tweet)
 
             text = extract_value_if_key_exists('text', tweet)
             if text is None:
@@ -115,11 +105,32 @@ def extract_value_if_key_exists(key: str, input_dict: dict):
     return val
 
 
+def convert_places_to_csv(ds: Datastore):
+    places = ds.collection.find({})
+    df_list = []
+    for place in places:
+        bbox = place['data']['bounding_box']['coordinates'][0]
+        name = place['data']['name']
+        print(name)
+        print(bbox)
+        temp_frame = pd.DataFrame([pd.read_json(json.dumps({
+            'name': name,
+            'bounding_box': bbox
+        }), typ='series')])
+
+        df_list.append(temp_frame)
+
+    master_df = pd.concat(df_list)
+    return master_df
+
+
 def convert_json_to_df(tweets: list):
     df_list = []
     for tweet in tweets:
-        temp_frame = pd.DataFrame.from_dict(tweet, orient="index")
+        # temp_frame = pd.read_json(json.dumps(tweet))
+        temp_frame = pd.DataFrame([pd.read_json(json.dumps(tweet), typ='series')])
         df_list.append(temp_frame)
+
     master_df = pd.concat(df_list)
     return master_df
 
@@ -134,24 +145,31 @@ def get_master_df(tweet_collection: Datastore):
 def main():
     print("OTTAWA COVID TWEET ANALYZER")
     print("Sourcing and Loading Tweets into DB")
-    retrieved_tweets = retrieve_data()
+    # retrieved_tweets = retrieve_data()
     # store_tweets(retrieved_tweets, tweet_collection)
 
     # convert_json_to_df(tweets=retrieved_tweets)
     # READ TWEETS FROM CSV
-    #tweets = read_from_csv("tweets.csv")
-    tweets1 = read_from_csv("tweets3.csv")
+    # tweets = read_from_csv("tweets.csv")
+    # tweets1 = read_from_csv("tweets1.csv")
 
-    all_tweets = tweets1 + retrieved_tweets
+    all_tweets = [tweet for tweet in tweet_collection.retrieve_tweets()]
 
+    start = time.perf_counter()
     # Run sentiment pipeline
     analyzed_tweets = sentiment_analysis(all_tweets)
-
-    store_tweets(analyzed_tweets, tweet_collection)
+    end = time.perf_counter() - start
+    print(f'Sentiment analysis finished in: {end}')
+    # store_tweets(all_tweets, tweet_collection)
     master_df = get_master_df(tweet_collection)
+    print(master_df)
 
-    master_df.to_csv("master_tweets.csv")
+    # master_df.to_csv("tweet_dump1.csv")
 
+    #places = pull_places(api)
+    #store_geocodes(places, geocode_collection)
+    #places_df = convert_places_to_csv(geocode_collection)
+    #places_df.to_csv("places.csv")
 
 if __name__ == "__main__":
     main()
