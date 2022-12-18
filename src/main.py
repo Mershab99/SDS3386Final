@@ -153,23 +153,23 @@ def main():
     # tweets = read_from_csv("tweets.csv")
     # tweets1 = read_from_csv("tweets1.csv")
 
-    all_tweets = [tweet for tweet in tweet_collection.retrieve_tweets()]
+    #all_tweets = [tweet for tweet in tweet_collection.retrieve_tweets()]
 
-    start = time.perf_counter()
+    #start = time.perf_counter()
     # Run sentiment pipeline
-    analyzed_tweets = sentiment_analysis(all_tweets)
-    end = time.perf_counter() - start
-    print(f'Sentiment analysis finished in: {end}')
+    #analyzed_tweets = sentiment_analysis(all_tweets)
+    #end = time.perf_counter() - start
+    #print(f'Sentiment analysis finished in: {end}')
     # store_tweets(all_tweets, tweet_collection)
-    master_df = get_master_df(tweet_collection)
-    print(master_df)
+    #master_df = get_master_df(tweet_collection)
+    #print(master_df)
 
     # master_df.to_csv("tweet_dump1.csv")
 
-    #places = pull_places(api)
-    #store_geocodes(places, geocode_collection)
-    #places_df = convert_places_to_csv(geocode_collection)
-    #places_df.to_csv("places.csv")
+    places = pull_places(api)
+    store_geocodes(places, geocode_collection)
+    places_df = convert_places_to_csv(geocode_collection)
+    places_df.to_csv("places.csv")
 
 if __name__ == "__main__":
     main()

@@ -8,9 +8,9 @@ from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipe
 #model2 = AutoModelForSequenceClassification.from_pretrained('nlptown/bert-base-multilingual-uncased-sentiment').to('cuda')
 
 # edit device to 0 for GPU
-sentiment_classifier = pipeline('sentiment-analysis', device=0)
+sentiment_classifier = pipeline('sentiment-analysis', device=-1)
 
-bert_classifier = pipeline(model='nlptown/bert-base-multilingual-uncased-sentiment', device=0)
+bert_classifier = pipeline(model='nlptown/bert-base-multilingual-uncased-sentiment', device=-1)
 
 
 def classify_sentiment_analysis(text):
