@@ -3,6 +3,10 @@
 
 ## Created by Noura, Lendl, and Mershab
 
+> You can find the report of our project [here](https://github.com/Mershab99/SDS3386Final/blob/main/Project%20report.pdf)
+
+
+
 # Instructions
 ## Local Use TWEET EXTRACTOR:
 1. (Optional Step) Install Docker: https://docs.docker.com/get-docker/
